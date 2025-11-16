@@ -1,0 +1,72 @@
+services:
+  backend:
+    build:
+      context: ../        # backend.Dockerfile is in the same folder as docker-compose.yml
+      dockerfile: docker/backend.Dockerfile
+    container_name: smart_storage_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../storage:/app/storage/uploads  # maps host backend/storage to container path
+    depends_on:
+      - postgres
+      - mongo
+      - redis
+      - minio
+    environment:
+      POSTGRES_URL: "postgresql://postgres:postgres@postgres:5432/hackathon_db"
+      MONGO_URL: "mongodb://mongo:27017"
+      MONGO_DB: "hackathon_db"
+      REDIS_HOST: "redis"
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ACCESS_KEY: "minioaccess"
+      MINIO_SECRET_KEY: "miniosecret"
+      MINIO_BUCKET: "user-media"
+
+  postgres:
+    image: postgres:15
+    container_name: hackathon_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: hackathon_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  mongo:
+    image: mongo:6
+    container_name: hackathon_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:7
+    container_name: hackathon_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  minio:
+    image: minio/minio
+    container_name: hackathon_minio
+    environment:
+      MINIO_ROOT_USER: minioaccess
+      MINIO_ROOT_PASSWORD: miniosecret
+    command: server /data
+    ports:
+      - "9000:9000"
+    volumes:
+      - minio_data:/data
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+  minio_data:
